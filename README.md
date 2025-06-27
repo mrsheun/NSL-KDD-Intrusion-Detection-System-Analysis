@@ -142,12 +142,9 @@ import matplotlib.pyplot as plt
 import shap # Explicitly import shap here
 
 # --- 1. Load Data ---
-# Changed 'Small Training Set.csv' to 'Small Training Set.csv' without header=None, assuming your CSV doesn't have a header.
-# If your CSV truly has no header, keep header=None and adjust column assignment.
-# Based on your initial df.columns = feature_names check, it implies your CSV *does not* have a header.
 df = pd.read_csv('Small Training Set.csv', header=None)
 
-# Assign column names if you have them, otherwise proceed with default indices
+# Assign column names
 # Reference: NSL-KDD has 41 features + label + difficulty (43 columns total)
 feature_names = [
     'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes', 'land',
@@ -233,23 +230,17 @@ preprocessor_step = best_model_pipeline.named_steps['prep']
 # Get the final classifier step from the best pipeline
 classifier_step = best_model_pipeline.named_steps['clf']
 
-# CRITICAL FIX: Transform X_test using the preprocessor to get the features that the classifier sees.
-# This X_test_transformed will now have the same number of columns as the feature_names_transformed.
+Transform X_test using the preprocessor to get the features that the classifier sees. This X_test_transformed will now have the same number of columns as the feature_names_transformed.
 X_test_transformed = preprocessor_step.transform(X_test)
 
-# CRITICAL FIX: Get the names of the transformed features correctly from the ColumnTransformer.
-# This method correctly gets all names, including one-hot encoded ones.
-# The `feature_names_in_` attribute on the preprocessor (or its transformers) can be helpful if needed,
-# but get_feature_names_out() is preferred for final names.
+CRITICAL FIX: Get the names of the transformed features correctly from the ColumnTransformer. This method correctly gets all names, including one-hot encoded ones. The `feature_names_in_` attribute on the preprocessor (or its transformers) can be helpful if needed, but get_feature_names_out() is preferred for final names.
 feature_names_transformed = preprocessor_step.get_feature_names_out().tolist()
 
-# CRITICAL FIX: Calculate permutation importance directly on the classifier,
-# using the *transformed* X_test.
-# Now, result.importances_mean will have length 102 (matching feature_names_transformed).
+# CRITICAL FIX: Calculate permutation importance directly on the classifier, using the *transformed* X_test. result.importances_mean will have length 102 (matching feature_names_transformed).
 result = permutation_importance(classifier_step, X_test_transformed, y_test,
                                 n_repeats=10, random_state=42, n_jobs=-1)
 
-# Now, create the Series; the lengths should match (102 and 102)
+# create the Series; the lengths should match (102 and 102)
 importances = pd.Series(result.importances_mean, index=feature_names_transformed)
 
 print("\nPermutation Importances (for Transformed Features):")
@@ -257,12 +248,10 @@ print(importances.sort_values(ascending=False).head(20))
 
 # --- 11. SHAP for Logistic Regression ---
 
-# X_test_transformed is already computed above in the Permutation Importance section.
-# Use the classifier_step directly for the explainer as it's the model trained on the transformed data.
+# X_test_transformed is already computed above in the Permutation Importance section. Use the classifier_step directly for the explainer as it's the model trained on the transformed data.
 explainer = shap.LinearExplainer(classifier_step, X_test_transformed, feature_perturbation="interventional")
 shap_values = explainer.shap_values(X_test_transformed)
 
-# SHAP summary plot (requires matplotlib)
-# Ensure feature_names is passed for better interpretability
+# SHAP summary plot (requires matplotlib) Ensure feature_names is passed for better interpretability
 shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names_transformed)
 
