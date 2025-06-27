@@ -7,13 +7,7 @@ The initial phase of the analysis involved loading the intrusion detection syste
 
 The dataset, consistent with the NSL-KDD structure, contains 43 columns. These columns encompass 41 distinct features, a 'label' column indicating the type of network connection (e.g., 'normal', 'attack'), and a 'difficulty' column, which is an auxiliary attribute not used for classification. The feature_names list was programmatically applied as column headers to the loaded DataFrame, conditional on the DataFrame's column count matching the expected 43, as illustrated in Figure 1.
 
-Figure 1: Definition of Feature Names and Initial DataFrame Column Assignment
-
-
 This foundational step is crucial for accurate data referencing throughout the machine learning pipeline. A sample of the loaded and named data is presented in Figure 2.
-
-Figure 2: Head of the Loaded DataFrame with Assigned Column Headers
-
 
 2. Binary Label Creation
 Following the successful loading and initial naming of the dataset, the next crucial step involved transforming the multi-class 'label' column into a binary target variable. The original 'label' column specifies various network connection types, including 'normal' and numerous attack categories (e.g., 'neptune', 'warezclient', 'portsweep'). For a binary classification task, these attack types need to be unified into a single 'attack' class.
@@ -22,8 +16,6 @@ To achieve this, a new column, binary_label, was engineered. This column assigns
 
 3. Model Evaluation
 Following the grid search for optimal hyperparameters, the performance of the best Logistic Regression model was rigorously evaluated on the unseen test dataset. Key classification metrics, including the Classification Report, Confusion Matrix, and ROC AUC score, were computed to assess the model's efficacy in detecting network intrusions. The output of these evaluations is presented in Figure 3.
-
-Figure 3: Classification Report, Confusion Matrix, and ROC Curve
 
 
 3.1. Classification Report and Confusion Matrix
@@ -65,9 +57,6 @@ Note: The user warning "Found unknown categories in columns [1] during transform
 4. Advanced Interpretability: Permutation Importance
 To understand which transformed features contribute most significantly to the model's predictions, permutation importance was calculated. This method assesses the reduction in model performance (in this case, F1-score) when a single feature's values are randomly shuffled, thereby breaking its relationship with the target variable. A larger drop in performance indicates higher importance. The analysis was performed on the transformed feature space (102 features) that the Logistic Regression model directly utilizes, as shown in Figure 4.
 
-Figure 4: Top 10 Permutation Importances for Transformed Features
-
-
 The top 10 most important transformed features, based on their mean permutation importance, are as follows:
 
 num_dst_host_same_src_port_rate: 0.028713
@@ -108,8 +97,6 @@ These findings provide valuable insights into the network characteristics that t
 To provide a more granular understanding of individual feature contributions to specific predictions, SHAP (SHapley Additive exPlanations) values were computed for the Logistic Regression model. SHAP values quantify the impact of each feature on the model's output for a given instance, providing both the magnitude and direction (positive or negative impact on the prediction of an attack).
 
 The SHAP summary plot visually aggregates the SHAP values across the test dataset, offering insights into overall feature importance and the distribution of their effects, as depicted in Figure 5.
-
-Figure 5: SHAP Summary Plot for Logistic Regression Model
 
 
 Key Findings from the SHAP Summary Plot:
