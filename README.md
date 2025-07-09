@@ -141,11 +141,11 @@ from sklearn.inspection import permutation_importance # Explicitly import permut
 import matplotlib.pyplot as plt
 import shap # Explicitly import shap here
 
-# --- 1. Load Data ---
+1. Load Data 
 df = pd.read_csv('Small Training Set.csv', header=None)
 
-# Assign column names
-# Reference: NSL-KDD has 41 features + label + difficulty (43 columns total)
+ Assign column names
+ Reference: NSL-KDD has 41 features + label + difficulty (43 columns total)
 feature_names = [
     'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes', 'land',
     'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 'logged_in', 'num_compromised',
@@ -161,35 +161,34 @@ feature_names = [
 if df.shape[1] == 43:
     df.columns = feature_names
 
-# --- 2. Binary Label: normal=0, attack=1 ---
+ 2. Binary Label: normal=0, attack=1 ---
 df['binary_label'] = (df['label'] != 'normal').astype(int)
 
-# --- 3. Split features/labels ---
+3. Split features/labels ---
 X = df.drop(['label', 'difficulty', 'binary_label'], axis=1)
 y = df['binary_label']
 
-# --- 4. Identify categorical and numeric features ---
+ 4. Identify categorical and numeric features ---
 categorical_cols = ['protocol_type', 'service', 'flag']
 numeric_cols = [col for col in X.columns if col not in categorical_cols]
 
-# --- 5. Train/Test split ---
+5. Train/Test split ---
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, stratify=y, random_state=42
 )
 
-# --- 6. Pipeline for preprocessing and Logistic Regression ---
+ 6. Pipeline for preprocessing and Logistic Regression ---
 preprocessor = ColumnTransformer([
     ('cat', OneHotEncoder(drop='first', handle_unknown='ignore'), categorical_cols),
     ('num', StandardScaler(), numeric_cols)
 ])
 
-# Define the full pipeline, using 'prep' as the name for the preprocessor step
+Define the full pipeline, using 'prep' as the name for the preprocessor step
 pipe = Pipeline([
     ('prep', preprocessor), # Name of the preprocessor step is 'prep'
     ('clf', LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42)) # Added random_state for reproducibility
 ])
-
-# --- 7. Grid Search for Hyperparameters ---
+ 7. Grid Search for Hyperparameters ---
 param_grid = {
     'clf__C': [0.01, 0.1, 1, 10, 100],
     'clf__solver': ['liblinear', 'lbfgs']
@@ -200,7 +199,7 @@ grid.fit(X_train, y_train)
 
 print("Best parameters:", grid.best_params_)
 
-# --- 8. Evaluate on Test Set ---
+8. Evaluate on Test Set ---
 y_pred = grid.predict(X_test)
 y_proba = grid.predict_proba(X_test)[:,1]
 
@@ -208,7 +207,7 @@ print("\nClassification Report:\n", classification_report(y_test, y_pred))
 print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
 print("ROC AUC:", roc_auc_score(y_test, y_proba))
 
-# --- 9. Plot ROC Curve ---
+ 9. Plot ROC Curve ---
 fpr, tpr, thresholds = roc_curve(y_test, y_proba)
 plt.figure()
 plt.plot(fpr, tpr, label='Logistic Regression (AUC={:.2f})'.format(roc_auc_score(y_test, y_proba)))
@@ -219,7 +218,7 @@ plt.title('ROC Curve')
 plt.legend(loc='lower right')
 plt.show()
 
-# --- 10. Advanced Interpretability: Permutation Importance ---
+10. Advanced Interpretability: Permutation Importance 
 
 # Get the best estimator from the Grid Search
 best_model_pipeline = grid.best_estimator_
@@ -246,12 +245,12 @@ importances = pd.Series(result.importances_mean, index=feature_names_transformed
 print("\nPermutation Importances (for Transformed Features):")
 print(importances.sort_values(ascending=False).head(20))
 
-# --- 11. SHAP for Logistic Regression ---
+11. SHAP for Logistic Regression ---
 
-# X_test_transformed is already computed above in the Permutation Importance section. Use the classifier_step directly for the explainer as it's the model trained on the transformed data.
+ X_test_transformed is already computed above in the Permutation Importance section. Use the classifier_step directly for the explainer as it's the model trained on the transformed data.
 explainer = shap.LinearExplainer(classifier_step, X_test_transformed, feature_perturbation="interventional")
 shap_values = explainer.shap_values(X_test_transformed)
 
-# SHAP summary plot (requires matplotlib) Ensure feature_names is passed for better interpretability
+SHAP summary plot (requires matplotlib) Ensure feature_names is passed for better interpretability
 shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names_transformed)
 
