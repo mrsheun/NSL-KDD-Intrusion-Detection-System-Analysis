@@ -125,8 +125,7 @@ The SHAP analysis provides a robust framework for explaining the Logistic Regres
 
 
 # IDS DATASET
-# NSL-KDD Binary Classification with Logistic Regression, Pipeline, Grid Search, and SHAP
-
+NSL-KDD Binary Classification with Logistic Regression, Pipeline, Grid Search, and SHAP
 import pandas as pd
 import numpy as np
 
@@ -146,7 +145,7 @@ df = pd.read_csv('Small Training Set.csv', header=None)
 
  Assign column names
  Reference: NSL-KDD has 41 features + label + difficulty (43 columns total)
-feature_names = [
+# feature_names = [
     'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes', 'land',
     'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 'logged_in', 'num_compromised',
     'root_shell', 'su_attempted', 'num_root', 'num_file_creations', 'num_shells',
@@ -218,30 +217,26 @@ plt.title('ROC Curve')
 plt.legend(loc='lower right')
 plt.show()
 
-10. Advanced Interpretability: Permutation Importance 
-
-# Get the best estimator from the Grid Search
+    # Permutation Importance 
 best_model_pipeline = grid.best_estimator_
-
-# Get the preprocessor step from the best pipeline
+# Preprocessor step from the best pipeline
 preprocessor_step = best_model_pipeline.named_steps['prep']
 
-# Get the final classifier step from the best pipeline
+# final classifier step from the best pipeline
 classifier_step = best_model_pipeline.named_steps['clf']
 
-Transform X_test using the preprocessor to get the features that the classifier sees. This X_test_transformed will now have the same number of columns as the feature_names_transformed.
+Transform X_test using the preprocessor to get the features that the classifier sees. 
+This X_test_transformed will now have the same number of columns as the feature_names_transformed.
 X_test_transformed = preprocessor_step.transform(X_test)
 
 CRITICAL FIX: Get the names of the transformed features correctly from the ColumnTransformer. This method correctly gets all names, including one-hot encoded ones. The `feature_names_in_` attribute on the preprocessor (or its transformers) can be helpful if needed, but get_feature_names_out() is preferred for final names.
 feature_names_transformed = preprocessor_step.get_feature_names_out().tolist()
 
-# CRITICAL FIX: Calculate permutation importance directly on the classifier, using the *transformed* X_test. result.importances_mean will have length 102 (matching feature_names_transformed).
+Calculating the permutation importance directly on the classifier, using the *transformed* X_test. result.importances_mean will have length 102 (matching feature_names_transformed).
 result = permutation_importance(classifier_step, X_test_transformed, y_test,
                                 n_repeats=10, random_state=42, n_jobs=-1)
-
-# create the Series; the lengths should match (102 and 102)
+                                
 importances = pd.Series(result.importances_mean, index=feature_names_transformed)
-
 print("\nPermutation Importances (for Transformed Features):")
 print(importances.sort_values(ascending=False).head(20))
 
@@ -251,6 +246,6 @@ print(importances.sort_values(ascending=False).head(20))
 explainer = shap.LinearExplainer(classifier_step, X_test_transformed, feature_perturbation="interventional")
 shap_values = explainer.shap_values(X_test_transformed)
 
-SHAP summary plot (requires matplotlib) Ensure feature_names is passed for better interpretability
+SHAP summary plot (please, you can use matplotlib) Ensure feature_names is passed for better interpretability
 shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names_transformed)
 
